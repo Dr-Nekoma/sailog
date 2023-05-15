@@ -35,6 +35,9 @@
                 {
                   # https://devenv.sh/reference/options/
                   languages.go.enable = true;
+
+                  # https://devenv.sh/packages/
+                  packages = [ pkgs.protobuf ];
                 }
               ];
             };
