@@ -10,6 +10,19 @@
       forEachSystem = nixpkgs.lib.genAttrs (import systems);
     in
     {
+      packages = forEachSystem
+        (system:
+          let
+            pkgs = nixpkgs.legacyPackages.${system};
+          in
+          {
+            default = pkgs.buildGoModule {
+              name = "sailog";
+              src = pkgs.lib.cleanSource ./.;
+              vendorSha256 = "sha256-pQpattmS9VmO3ZIQUFn66az8GSmB4IvYhTTCFn6SUmo=";
+            };
+          }
+        );
       devShells = forEachSystem
         (system:
           let
