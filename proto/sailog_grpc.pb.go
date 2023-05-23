@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.21.8
-// source: sailog.proto
+// source: proto/sailog.proto
 
-package helloworld
+package proto
 
 import (
 	context "context"
@@ -18,128 +18,90 @@ import (
 // Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
-// GreeterClient is the client API for Greeter service.
+// RaftClient is the client API for Raft service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type GreeterClient interface {
-	// Sends a greeting
-	SayHi(ctx context.Context, in *HelloRequest, opts ...grpc.CallOption) (*HelloReply, error)
-	// Sends another greeting
-	SayHelloAgain(ctx context.Context, in *HelloRequest, opts ...grpc.CallOption) (*HelloReply, error)
+type RaftClient interface {
+	// Exchange votes
+	RequestVote(ctx context.Context, in *RequestVoteMessage, opts ...grpc.CallOption) (*ReplyVoteMessage, error)
 }
 
-type greeterClient struct {
+type raftClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewGreeterClient(cc grpc.ClientConnInterface) GreeterClient {
-	return &greeterClient{cc}
+func NewRaftClient(cc grpc.ClientConnInterface) RaftClient {
+	return &raftClient{cc}
 }
 
-func (c *greeterClient) SayHi(ctx context.Context, in *HelloRequest, opts ...grpc.CallOption) (*HelloReply, error) {
-	out := new(HelloReply)
-	err := c.cc.Invoke(ctx, "/helloworld.Greeter/SayHi", in, out, opts...)
+func (c *raftClient) RequestVote(ctx context.Context, in *RequestVoteMessage, opts ...grpc.CallOption) (*ReplyVoteMessage, error) {
+	out := new(ReplyVoteMessage)
+	err := c.cc.Invoke(ctx, "/raft.Raft/RequestVote", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *greeterClient) SayHelloAgain(ctx context.Context, in *HelloRequest, opts ...grpc.CallOption) (*HelloReply, error) {
-	out := new(HelloReply)
-	err := c.cc.Invoke(ctx, "/helloworld.Greeter/SayHelloAgain", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// GreeterServer is the server API for Greeter service.
-// All implementations must embed UnimplementedGreeterServer
+// RaftServer is the server API for Raft service.
+// All implementations must embed UnimplementedRaftServer
 // for forward compatibility
-type GreeterServer interface {
-	// Sends a greeting
-	SayHi(context.Context, *HelloRequest) (*HelloReply, error)
-	// Sends another greeting
-	SayHelloAgain(context.Context, *HelloRequest) (*HelloReply, error)
-	mustEmbedUnimplementedGreeterServer()
+type RaftServer interface {
+	// Exchange votes
+	RequestVote(context.Context, *RequestVoteMessage) (*ReplyVoteMessage, error)
+	mustEmbedUnimplementedRaftServer()
 }
 
-// UnimplementedGreeterServer must be embedded to have forward compatible implementations.
-type UnimplementedGreeterServer struct {
+// UnimplementedRaftServer must be embedded to have forward compatible implementations.
+type UnimplementedRaftServer struct {
 }
 
-func (UnimplementedGreeterServer) SayHi(context.Context, *HelloRequest) (*HelloReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SayHi not implemented")
+func (UnimplementedRaftServer) RequestVote(context.Context, *RequestVoteMessage) (*ReplyVoteMessage, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RequestVote not implemented")
 }
-func (UnimplementedGreeterServer) SayHelloAgain(context.Context, *HelloRequest) (*HelloReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SayHelloAgain not implemented")
-}
-func (UnimplementedGreeterServer) mustEmbedUnimplementedGreeterServer() {}
+func (UnimplementedRaftServer) mustEmbedUnimplementedRaftServer() {}
 
-// UnsafeGreeterServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to GreeterServer will
+// UnsafeRaftServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to RaftServer will
 // result in compilation errors.
-type UnsafeGreeterServer interface {
-	mustEmbedUnimplementedGreeterServer()
+type UnsafeRaftServer interface {
+	mustEmbedUnimplementedRaftServer()
 }
 
-func RegisterGreeterServer(s grpc.ServiceRegistrar, srv GreeterServer) {
-	s.RegisterService(&Greeter_ServiceDesc, srv)
+func RegisterRaftServer(s grpc.ServiceRegistrar, srv RaftServer) {
+	s.RegisterService(&Raft_ServiceDesc, srv)
 }
 
-func _Greeter_SayHi_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(HelloRequest)
+func _Raft_RequestVote_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestVoteMessage)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GreeterServer).SayHi(ctx, in)
+		return srv.(RaftServer).RequestVote(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/helloworld.Greeter/SayHi",
+		FullMethod: "/raft.Raft/RequestVote",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GreeterServer).SayHi(ctx, req.(*HelloRequest))
+		return srv.(RaftServer).RequestVote(ctx, req.(*RequestVoteMessage))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Greeter_SayHelloAgain_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(HelloRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(GreeterServer).SayHelloAgain(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/helloworld.Greeter/SayHelloAgain",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GreeterServer).SayHelloAgain(ctx, req.(*HelloRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-// Greeter_ServiceDesc is the grpc.ServiceDesc for Greeter service.
+// Raft_ServiceDesc is the grpc.ServiceDesc for Raft service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var Greeter_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "helloworld.Greeter",
-	HandlerType: (*GreeterServer)(nil),
+var Raft_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "raft.Raft",
+	HandlerType: (*RaftServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "SayHi",
-			Handler:    _Greeter_SayHi_Handler,
-		},
-		{
-			MethodName: "SayHelloAgain",
-			Handler:    _Greeter_SayHelloAgain_Handler,
+			MethodName: "RequestVote",
+			Handler:    _Raft_RequestVote_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "sailog.proto",
+	Metadata: "proto/sailog.proto",
 }

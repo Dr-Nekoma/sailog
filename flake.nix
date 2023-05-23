@@ -37,7 +37,7 @@
                   languages.go.enable = true;
 
                   # https://devenv.sh/packages/
-                  packages = [ pkgs.protobuf ];
+                  packages = [ pkgs.protobuf pkgs.just ];
                 }
               ];
             };

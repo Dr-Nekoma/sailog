@@ -1,22 +1,3 @@
-/*
- *
- * Copyright 2015 gRPC authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
-
-// Package main implements a server for Greeter service.
 package main
 
 import (
@@ -28,6 +9,7 @@ import (
 
 	"google.golang.org/grpc"
 	pb "sailog/proto"
+	raftServer "sailog/server/pkgs"
 )
 
 var (
@@ -36,27 +18,40 @@ var (
 
 // server is used to implement helloworld.GreeterServer.
 type server struct {
-	pb.UnimplementedGreeterServer
+	pb.UnimplementedRaftServer
+	state raftServer.State
 }
 
-// SayHello implements helloworld.GreeterServer
-func (s *server) SayHi(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
-	log.Printf("Received: %v", in.GetName())
-	return &pb.HelloReply{Message: "Hi " + in.GetName()}, nil
-}
+// RequestVote implements voting system to decide leader
+func (s *server) RequestVote(ctx context.Context, in *pb.RequestVoteMessage) (*pb.ReplyVoteMessage, error) {
+	log.Printf("Judging candidate %v...", in.CandidateId)
 
-func (s *server) SayHelloAgain(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
-	return &pb.HelloReply{Message: "Hello again " + in.GetName()}, nil
+	// TODO: Next step is to use the global state to judge if the candidate should be accepted as leader
+
+	return &pb.ReplyVoteMessage{
+		Term: 1,
+		VoteGranted: true}, nil
 }
 
 func main() {
+	// Parse flags
 	flag.Parse()
+
+	// Create server instance
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	s := grpc.NewServer()
-	pb.RegisterGreeterServer(s, &server{})
+
+	var initialState raftServer.State
+	initialState.CurrentTerm = raftServer.Term{1, 0, 0}
+	initialState.State = raftServer.FollowerState
+	
+	// Set initial state
+	pb.RegisterRaftServer(s, &server{state: initialState})
+	
+	// Listening to port
 	log.Printf("server listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)

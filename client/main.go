@@ -31,12 +31,12 @@ import (
 )
 
 const (
-	defaultName = "world"
+	defaultId = 1
 )
 
 var (
 	addr = flag.String("addr", "localhost:50051", "the address to connect to")
-	name = flag.String("name", defaultName, "Name to greet")
+	id = flag.Int("id", defaultId, "Id to simulate election has started")
 )
 
 func main() {
@@ -47,20 +47,19 @@ func main() {
 		log.Fatalf("did not connect: %v", err)
 	}
 	defer conn.Close()
-	c := pb.NewGreeterClient(conn)
+	c := pb.NewRaftClient(conn)
 
 	// Contact the server and print out its response.
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	r, err := c.SayHi(ctx, &pb.HelloRequest{Name: *name})
+	r, err := c.RequestVote(ctx, &pb.RequestVoteMessage{
+		Term: int32(*id),
+	        CandidateId: int32(*id),
+	        LastLogIndex: int32(*id),
+	        LastLogTerm: int32(*id),		
+	        })
 	if err != nil {
-		log.Fatalf("could not greet: %v", err)
+		log.Fatalf("could not simulate: %v", err)
 	}
-	log.Printf("Greeting: %s", r.GetMessage())
-
-	r, err = c.SayHelloAgain(ctx, &pb.HelloRequest{Name: *name})
-	if err != nil {
-		log.Fatalf("could not greet: %v", err)
-	}
-	log.Printf("Greeting: %s", r.GetMessage())
+	log.Printf("Status: %t", r.VoteGranted)
 }
